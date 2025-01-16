@@ -1,6 +1,3 @@
-# prometheus-grafana-monitoring
-
-
 # Prometheus and Grafana Setup
 
 This repository provides step-by-step instructions for configuring Prometheus and Grafana for monitoring, including installation, setup, and integration. This setup is ideal for system administrators or developers looking to monitor system performance, gather metrics, and visualize data in real time.
