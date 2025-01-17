@@ -147,7 +147,3 @@ sudo systemctl restart prometheus
 
 ---
 
-## References
-
-- [Configure Prometheus Monitoring with Grafana](https://www.scaleway.com/en/docs/configure-prometheus-monitoring-with-grafana/)
-
