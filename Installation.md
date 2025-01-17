@@ -30,3 +30,38 @@ sudo cp prometheus/systemd/node_exporter.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now node_exporter
 ```
+### 3. Installing Prometheus
+
+Run the script `scripts/install_prometheus.sh` or execute the steps below manually:
+
+```bash
+wget https://github.com/prometheus/prometheus/releases/download/v2.2.1/prometheus-2.2.1.linux-amd64.tar.gz
+tar xfz prometheus-2.2.1.linux-amd64.tar.gz
+cd prometheus-2.2.1.linux-amd64
+sudo cp prometheus promtool /usr/local/bin/
+sudo cp -r consoles console_libraries /etc/prometheus
+sudo chown -R prometheus:prometheus /etc/prometheus
+cd .. && rm -rf prometheus-2.2.1.linux-amd64
+```
+
+Create a Prometheus configuration file and systemd service:
+
+```bash
+sudo cp prometheus/prometheus.yml /etc/prometheus/
+sudo cp prometheus/systemd/prometheus.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now prometheus
+```
+
+---
+
+### 4. Installing Grafana
+
+Run the script `scripts/install_grafana.sh` or execute the steps below manually:
+
+```bash
+wget https://dl.grafana.com/oss/release/grafana_5.0.4_amd64.deb
+sudo apt-get install -y adduser libfontconfig
+sudo dpkg -i grafana_5.0.4_amd64.deb
+sudo systemctl enable --now grafana-server
+```
