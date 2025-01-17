@@ -1,45 +1,153 @@
 # Prometheus and Grafana Setup
 
-This repository provides step-by-step instructions for configuring Prometheus and Grafana for monitoring, including installation, setup, and integration. This setup is ideal for system administrators or developers looking to monitor system performance, gather metrics, and visualize data in real time.
+This repository provides step-by-step instructions for configuring Prometheus and Grafana for system monitoring, including setting up Node Exporter on monitored servers.
+
+---
+
+## Folder Structure
+
+```
+.
+├── README.md
+├── prometheus
+│   ├── prometheus.yml
+│   └── systemd
+│       ├── node_exporter.service
+│       └── prometheus.service
+├── grafana
+│   └── setup_instructions.txt
+└── scripts
+    ├── install_prometheus.sh
+    ├── install_grafana.sh
+    ├── install_node_exporter.sh
+    └── configure_firewall.sh
+```
+
+---
 
 ## Prerequisites
 
-Before starting, ensure you have the following:
+- A Linux environment (Debian-based).
+- Administrative privileges.
 
-- A Linux-based system (Ubuntu/Debian recommended).
-- sudo privileges.
-- Internet access for downloading necessary packages.
-- Basic understanding of system administration and networking.
+---
 
-## Tools Overview
+## Setup Instructions
 
-### Prometheus
+### 1. Preparing the Environment
 
-Prometheus is an open-source systems monitoring and alerting toolkit. It is designed for reliability and scalability, making it an ideal solution for monitoring large systems.
+Run the following commands to create necessary users and directories:
 
-#### Key Features:
-- Multi-dimensional data model with time-series data.
-- PromQL (Prometheus Query Language) for powerful querying.
-- Pull-based metrics collection via HTTP.
-- Built-in alerting and visualization.
+```bash
+sudo useradd --no-create-home --shell /usr/sbin/nologin prometheus
+sudo useradd --no-create-home --shell /bin/false node_exporter
+sudo mkdir /etc/prometheus
+sudo mkdir /var/lib/prometheus
+sudo chown prometheus:prometheus /etc/prometheus
+sudo chown prometheus:prometheus /var/lib/prometheus
+```
 
+---
 
-### Grafana
+### 2. Installing Node Exporter
 
-Grafana is an open-source visualization and analytics tool. It integrates seamlessly with Prometheus to create customizable dashboards and alerts for your monitoring needs.
+Run the script `scripts/install_node_exporter.sh` or execute the steps below manually:
 
-#### Key Features:
-- Supports multiple data sources (e.g., Prometheus, Elasticsearch, MySQL).
-- Dynamic and interactive dashboards.
-- Alerting and notification capabilities.
-- Flexible user and team management.
+```bash
+wget https://github.com/prometheus/node_exporter/releases/download/v0.16.0/node_exporter-0.16.0.linux-amd64.tar.gz
+tar xvf node_exporter-0.16.0.linux-amd64.tar.gz
+sudo cp node_exporter-0.16.0.linux-amd64/node_exporter /usr/local/bin
+sudo chown node_exporter:node_exporter /usr/local/bin/node_exporter
+rm -rf node_exporter-0.16.0.linux-amd64*
+```
 
+Create a systemd service for Node Exporter:
 
-### Node Exporter
+```bash
+sudo cp prometheus/systemd/node_exporter.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now node_exporter
+```
 
-Node Exporter is a Prometheus exporter for hardware and OS metrics. It exposes system-level metrics, such as CPU, memory, disk usage, and network statistics, in a format Prometheus can scrape.
+---
 
-#### Key Features:
-- Lightweight and efficient.
-- Compatible with various Linux distributions.
-- Extensible with additional collectors.
+### 3. Installing Prometheus
+
+Run the script `scripts/install_prometheus.sh` or execute the steps below manually:
+
+```bash
+wget https://github.com/prometheus/prometheus/releases/download/v2.2.1/prometheus-2.2.1.linux-amd64.tar.gz
+tar xfz prometheus-2.2.1.linux-amd64.tar.gz
+cd prometheus-2.2.1.linux-amd64
+sudo cp prometheus promtool /usr/local/bin/
+sudo cp -r consoles console_libraries /etc/prometheus
+sudo chown -R prometheus:prometheus /etc/prometheus
+cd .. && rm -rf prometheus-2.2.1.linux-amd64
+```
+
+Create a Prometheus configuration file and systemd service:
+
+```bash
+sudo cp prometheus/prometheus.yml /etc/prometheus/
+sudo cp prometheus/systemd/prometheus.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now prometheus
+```
+
+---
+
+### 4. Installing Grafana
+
+Run the script `scripts/install_grafana.sh` or execute the steps below manually:
+
+```bash
+wget https://dl.grafana.com/oss/release/grafana_5.0.4_amd64.deb
+sudo apt-get install -y adduser libfontconfig
+sudo dpkg -i grafana_5.0.4_amd64.deb
+sudo systemctl enable --now grafana-server
+```
+
+---
+
+### 5. Configuring Prometheus for Multiple Servers
+
+Edit `/etc/prometheus/prometheus.yml` to include monitored servers:
+
+```yaml
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['localhost:9100', '172.16.102.162:9100']
+```
+
+Restart Prometheus:
+
+```bash
+sudo systemctl restart prometheus
+```
+
+---
+
+### 6. Accessing Dashboards
+
+- Prometheus: `http://<server-ip>:9090`
+- Grafana: `http://<server-ip>:3000`
+  - Default Username: `admin`
+  - Default Password: `admin`
+
+---
+
+## Additional Notes
+
+- For further details, refer to the `grafana/setup_instructions.txt`.
+- Disable firewall if necessary using `scripts/configure_firewall.sh`.
+
+---
+
+## References
+
+- [Configure Prometheus Monitoring with Grafana](https://www.scaleway.com/en/docs/configure-prometheus-monitoring-with-grafana/)
+
