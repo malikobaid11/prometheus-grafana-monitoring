@@ -23,3 +23,10 @@ sudo cp node_exporter-0.16.0.linux-amd64/node_exporter /usr/local/bin
 sudo chown node_exporter:node_exporter /usr/local/bin/node_exporter
 rm -rf node_exporter-0.16.0.linux-amd64*
 ```
+Create a systemd service for Node Exporter:
+
+```bash
+sudo cp prometheus/systemd/node_exporter.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now node_exporter
+```
